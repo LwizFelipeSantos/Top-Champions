@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Team": {
+      "title": "Team",
+      "description": "A championship team.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The user who created this team" },
+        "name": { "type": "string" },
+        "color": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "name", "createdAt", "updatedAt"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A player who plays for a team.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "name": { "type": "string" },
+        "number": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "teamId", "name", "createdAt", "updatedAt"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A championship match between two teams.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "round": { "type": "number" },
+        "homeTeamId": { "type": "string" },
+        "awayTeamId": { "type": "string" },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["scheduled", "finished"] },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "round", "homeTeamId", "awayTeamId", "status", "date", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Stores all the teams."
+    },
+    "/players/{playerId}": {
+      "schema": { "$ref": "#/entities/Player" },
+      "description": "Stores all the players."
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/Match" },
+      "description": "Stores the scheduled and finished matches."
+    }
+  }
+}

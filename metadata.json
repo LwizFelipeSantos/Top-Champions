@@ -1,0 +1,6 @@
+{
+  "name": "Top Champions",
+  "description": "Aplicativo para gerenciamento de campeonatos de pontos corridos com classificação em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

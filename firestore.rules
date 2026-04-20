@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    // TEAM VALIDATION
+    function isValidTeam(data) {
+      return data.keys().hasAll(['userId', 'name', 'createdAt', 'updatedAt']) 
+        && data.keys().size() <= 6
+        && data.userId == request.auth.uid 
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (data.get('color', '') is string && data.get('color', '').size() <= 20)
+        && (data.get('imageUrl', '') is string && data.get('imageUrl', '').size() <= 300000)
+        && data.createdAt is timestamp 
+        && data.updatedAt is timestamp;
+    }
+
+    match /teams/{teamId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(teamId);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid && isValidId(teamId);
+      
+      allow create: if isSignedIn() 
+        && isValidId(teamId)
+        && isValidTeam(incoming()) 
+        && incoming().createdAt == request.time 
+        && incoming().updatedAt == request.time;
+        
+      allow update: if (
+        isSignedIn() 
+        && isValidId(teamId)
+        && existing().userId == request.auth.uid 
+        && isValidTeam(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().userId == existing().userId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'color', 'imageUrl', 'updatedAt'])
+      );
+    }
+
+    // PLAYER VALIDATION
+    function isValidPlayer(data) {
+      return data.keys().hasAll(['userId', 'teamId', 'name', 'createdAt', 'updatedAt']) 
+        && data.keys().size() <= 6
+        && data.userId == request.auth.uid
+        && data.teamId is string && data.teamId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (data.get('number', '') is string && data.get('number', '').size() <= 10)
+        && data.createdAt is timestamp 
+        && data.updatedAt is timestamp;
+    }
+
+    match /players/{playerId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(playerId);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid && isValidId(playerId);
+      
+      allow create: if isSignedIn() 
+        && isValidId(playerId)
+        && isValidPlayer(incoming()) 
+        && incoming().createdAt == request.time 
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/teams/$(incoming().teamId))
+        && get(/databases/$(database)/documents/teams/$(incoming().teamId)).data.userId == request.auth.uid;
+        
+      allow update: if (
+        isSignedIn() 
+        && isValidId(playerId)
+        && existing().userId == request.auth.uid 
+        && isValidPlayer(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().userId == existing().userId
+        && incoming().teamId == existing().teamId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'number', 'updatedAt'])
+      );
+    }
+
+    // MATCH VALIDATION
+    function isValidMatch(data) {
+      return data.keys().hasAll(['userId', 'round', 'homeTeamId', 'awayTeamId', 'status', 'date', 'createdAt', 'updatedAt']) 
+        && data.keys().size() <= 10
+        && data.userId == request.auth.uid
+        && data.round is number 
+        && data.homeTeamId is string && data.homeTeamId.size() <= 128
+        && data.awayTeamId is string && data.awayTeamId.size() <= 128
+        && (data.get('homeScore', null) == null || data.get('homeScore', null) is number)
+        && (data.get('awayScore', null) == null || data.get('awayScore', null) is number)
+        && data.status in ['scheduled', 'finished']
+        && data.date is string && data.date.size() <= 50
+        && data.createdAt is timestamp 
+        && data.updatedAt is timestamp;
+    }
+
+    match /matches/{matchId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(matchId);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid && isValidId(matchId);
+      
+      allow create: if isSignedIn() 
+        && isValidId(matchId)
+        && isValidMatch(incoming()) 
+        && incoming().createdAt == request.time 
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/teams/$(incoming().homeTeamId))
+        && get(/databases/$(database)/documents/teams/$(incoming().homeTeamId)).data.userId == request.auth.uid
+        && exists(/databases/$(database)/documents/teams/$(incoming().awayTeamId))
+        && get(/databases/$(database)/documents/teams/$(incoming().awayTeamId)).data.userId == request.auth.uid;
+        
+      allow update: if (
+        isSignedIn() 
+        && isValidId(matchId)
+        && existing().userId == request.auth.uid 
+        && isValidMatch(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().userId == existing().userId
+        && incoming().homeTeamId == existing().homeTeamId
+        && incoming().awayTeamId == existing().awayTeamId
+        && (
+          (incoming().diff(existing()).affectedKeys().hasOnly(['round', 'date', 'updatedAt'])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['homeScore', 'awayScore', 'status', 'updatedAt', 'date', 'round'])) // allow updating scores optionally with other keys via save score
+        )
+      );
+    }
+  }
+}
