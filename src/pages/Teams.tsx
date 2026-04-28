@@ -147,25 +147,25 @@ export function Teams() {
                   <Shield className="text-white drop-shadow-md" size={20} />
                 )}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-2">
                 <h3 className="font-bold truncate text-white">{team.name}</h3>
                 <p className="text-xs text-gray-500">Time Oficial</p>
               </div>
               {isAdmin && (
-                <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                <div className="flex items-center gap-1">
                   <button 
                     onClick={() => openEditModal(team)}
-                    className="p-2 text-gray-500 hover:text-brand-cyan hover:bg-brand-cyan/10 rounded-lg"
+                    className="p-2.5 text-gray-400 hover:text-brand-cyan hover:bg-brand-cyan/10 rounded-lg bg-gray-800/30 md:bg-transparent transition-all"
                     title="Editar time"
                   >
-                    <Edit3 size={16} />
+                    <Edit3 size={18} />
                   </button>
                   <button 
                     onClick={() => removeTeam(team.id)}
-                    className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"
+                    className="p-2.5 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg bg-gray-800/30 md:bg-transparent transition-all"
                     title="Excluir time"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               )}

@@ -53,7 +53,7 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
       {/* Sidebar Mobile Header */}
-        <div className="md:hidden glow-panel p-4 flex justify-between items-center shadow-md">
+        <div className="md:hidden glow-panel p-4 flex justify-between items-center shadow-md sticky top-0 z-50 bg-[#0d1117]/80 backdrop-blur-md">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight accent-cyan">
           <div className="w-10 h-10 bg-brand-cyan/20 rounded-lg flex items-center justify-center border border-brand-cyan/30 shadow-[0_0_15px_rgba(0,212,255,0.2)]">
             <Trophy className="text-brand-cyan" size={24} />

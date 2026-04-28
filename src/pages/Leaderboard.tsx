@@ -17,8 +17,27 @@ export function Leaderboard() {
         </div>
       </div>
 
-      <div className="glow-panel rounded-2xl overflow-hidden mt-8">
-        <div className="overflow-x-auto">
+      <div className="glow-panel rounded-2xl overflow-hidden mt-8 relative group min-h-[400px]">
+        {/* Background Watermark SVG Logo - Robust and visible on all devices */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
+          <div className="w-[60%] h-[60%] md:w-[40%] md:h-[40%] opacity-[0.09] md:opacity-[0.05] transition-all duration-700 group-hover:opacity-[0.15] text-brand-cyan">
+            <svg viewBox="0 0 200 200" fill="currentColor" className="w-full h-full">
+              {/* Ball structure formed by stars */}
+              <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="translate(0, -10)" />
+              <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="rotate(72, 100, 100) translate(0, -10)" />
+              <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="rotate(144, 100, 100) translate(0, -10)" />
+              <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="rotate(216, 100, 100) translate(0, -10)" />
+              <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="rotate(288, 100, 100) translate(0, -10)" />
+              
+              {/* Central Text Area */}
+              <text x="100" y="115" textAnchor="middle" className="text-[12px] font-serif font-bold uppercase tracking-[0.2em] fill-current">Top</text>
+              <text x="100" y="135" textAnchor="middle" className="text-[14px] font-serif font-bold uppercase tracking-[0.1em] fill-current">Champions</text>
+              <text x="100" y="152" textAnchor="middle" className="text-[10px] font-serif font-light uppercase tracking-[0.3em] fill-current opacity-70">League</text>
+            </svg>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto relative z-10">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-800/50">
               <tr className="text-xs uppercase text-gray-400 border-b border-gray-700">
