@@ -20,7 +20,7 @@ export function Leaderboard() {
       <div className="glow-panel rounded-2xl overflow-hidden mt-8 relative group min-h-[400px]">
         {/* Background Watermark SVG Logo - Robust and visible on all devices */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0">
-          <div className="w-[60%] h-[60%] md:w-[40%] md:h-[40%] opacity-[0.09] md:opacity-[0.05] transition-all duration-700 group-hover:opacity-[0.15] text-brand-cyan">
+          <div className="w-[90%] h-[90%] md:w-[70%] md:h-[70%] opacity-[0.09] md:opacity-[0.05] transition-all duration-700 group-hover:opacity-[0.15] text-brand-cyan">
             <svg viewBox="0 0 200 200" fill="currentColor" className="w-full h-full">
               {/* Ball structure formed by stars */}
               <path d="M100 20L108 45L135 45L113 62L122 88L100 72L78 88L87 62L65 45L92 45L100 20Z" transform="translate(0, -10)" />
