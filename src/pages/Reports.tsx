@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
+import { useAuth } from '../context/AuthContext';
 import { Database, AlertCircle, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export function Reports() {
   const { leaderboard, teams, resetData } = useChampionship();
+  const { isAdmin } = useAuth();
 
   // Preparar os dados para o gráfico
   const chartData = leaderboard.slice(0, 10).map(entry => ({
@@ -88,24 +90,26 @@ export function Reports() {
                 Firebase Cloud Firestore 
               </h4>
               <p className="text-sm text-gray-300 leading-relaxed">
-                As regras de segurança estão aplicadas. Seus dados estão restritos apenas para o seu usuário (via Google Auth), com verificações de integridade nos schemas dos campeonatos.
+                {isAdmin ? 'As regras de segurança estão aplicadas. Seus dados estão restritos apenas para o seu usuário (via Google Auth).' : 'Os dados estão em modo de apenas leitura para visitantes.'}
               </p>
             </div>
           </div>
 
-          <div className="glow-panel border-rose-900/50 p-6 rounded-2xl bg-rose-950/20">
-            <h2 className="text-lg font-bold text-rose-500 mb-2">Zona de Perigo</h2>
-            <p className="text-sm text-gray-400 mb-4">
-              Isso irá deletar todas as equipes, jogadores e partidas registradas. A ação é irreversível. (Clique 2 vezes para confirmar)
-            </p>
-            <button 
-              onDoubleClick={handleReset}
-              className="flex items-center justify-center gap-2 w-full bg-rose-600/20 hover:bg-rose-600 border border-rose-600/50 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"
-            >
-              <RefreshCw size={16} />
-              Resetar Campeonato
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="glow-panel border-rose-900/50 p-6 rounded-2xl bg-rose-950/20">
+              <h2 className="text-lg font-bold text-rose-500 mb-2">Zona de Perigo</h2>
+              <p className="text-sm text-gray-400 mb-4">
+                Isso irá deletar todas as equipes, jogadores e partidas registradas. A ação é irreversível. (Clique 2 vezes para confirmar)
+              </p>
+              <button 
+                onDoubleClick={handleReset}
+                className="flex items-center justify-center gap-2 w-full bg-rose-600/20 hover:bg-rose-600 border border-rose-600/50 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"
+              >
+                <RefreshCw size={16} />
+                Resetar Campeonato
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

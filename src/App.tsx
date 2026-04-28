@@ -11,6 +11,7 @@ import { Landing } from './pages/Landing';
 
 function AppContent() {
   const [currentTab, setCurrentTab] = useState('leaderboard');
+  const [isVisitor, setIsVisitor] = useState(false);
   const { user, loading, signInWithGoogle } = useAuth();
 
   if (loading) {
@@ -23,8 +24,8 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    return <Landing onLogin={signInWithGoogle} />;
+  if (!user && !isVisitor) {
+    return <Landing onLogin={signInWithGoogle} onExplore={() => setIsVisitor(true)} />;
   }
 
   const renderContent = () => {

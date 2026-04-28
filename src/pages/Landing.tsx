@@ -4,9 +4,10 @@ import { motion } from 'motion/react';
 
 interface LandingProps {
   onLogin: () => void;
+  onExplore: () => void;
 }
 
-export function Landing({ onLogin }: LandingProps) {
+export function Landing({ onLogin, onExplore }: LandingProps) {
   return (
     <div className="min-h-screen bg-brand-dark text-white overflow-hidden selection:bg-brand-cyan selection:text-black">
       {/* Dynamic Background */}
@@ -16,7 +17,6 @@ export function Landing({ onLogin }: LandingProps) {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay" />
       </div>
 
-      {/* Navbar Container */}
       <nav className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-6 flex items-center justify-between">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -30,15 +30,25 @@ export function Landing({ onLogin }: LandingProps) {
           <span className="text-xl font-bold tracking-tight uppercase accent-cyan">Top Champions</span>
         </motion.div>
         
-        <motion.button 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          onClick={onLogin}
-          className="hidden sm:flex items-center gap-2 text-sm font-bold tracking-widest text-brand-cyan hover:text-white transition-colors"
-        >
-          ACESSAR CONTA <ChevronRight size={16} />
-        </motion.button>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <button 
+            onClick={onExplore}
+            className="text-[10px] sm:text-xs font-bold tracking-widest text-gray-400 hover:text-white transition-colors uppercase"
+          >
+            Apenas Visualizar
+          </button>
+          <motion.button 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            onClick={onLogin}
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold tracking-widest text-brand-cyan hover:text-white transition-colors"
+          >
+            <span className="hidden xs:inline">ACESSAR CONTA</span>
+            <span className="xs:hidden">LOGAR</span>
+            <ChevronRight size={16} />
+          </motion.button>
+        </div>
       </nav>
 
       {/* Hero Section */}
@@ -68,15 +78,24 @@ export function Landing({ onLogin }: LandingProps) {
               Esqueça as planilhas. Gerencie equipes, sorteie partidas e tenha uma tabela de classificação calculada automaticamente em tempo real.
             </p>
 
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onLogin}
-              className="bg-gradient-to-r from-brand-cyan to-[#009bbf] text-black font-extrabold uppercase tracking-widest px-10 py-5 rounded-2xl transition-all shadow-[0_0_40px_rgba(0,212,255,0.4)] flex items-center gap-3 mx-auto group hover:shadow-[0_0_60px_rgba(0,212,255,0.6)]"
-            >
-              Começar Grátis Agora
-              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onLogin}
+                className="w-full sm:w-auto bg-gradient-to-r from-brand-cyan to-[#009bbf] text-black font-extrabold uppercase tracking-widest px-10 py-5 rounded-2xl transition-all shadow-[0_0_40px_rgba(0,212,255,0.4)] flex items-center justify-center gap-3 group hover:shadow-[0_0_60px_rgba(0,212,255,0.6)]"
+              >
+                Gerenciar Agora
+                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+              
+              <button 
+                onClick={onExplore}
+                className="w-full sm:w-auto px-10 py-5 rounded-2xl border border-white/10 hover:bg-white/5 transition-all text-gray-300 font-bold uppercase tracking-widest text-sm"
+              >
+                Ver Classificação
+              </button>
+            </div>
           </motion.div>
         </div>
 

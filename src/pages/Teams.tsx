@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
+import { useAuth } from '../context/AuthContext';
 import { Shield, Plus, Trash2, Upload } from 'lucide-react';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#000000', '#64748b'];
 
 export function Teams() {
   const { teams, addTeam, removeTeam } = useChampionship();
+  const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
@@ -96,15 +98,17 @@ export function Teams() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Equipes</h1>
-          <p className="text-gray-400 mt-1">Gerencie os times registrados no campeonato.</p>
+          <p className="text-gray-400 mt-1">{isAdmin ? 'Gerencie os times registrados no campeonato.' : 'Confira os times registrados no campeonato.'}</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
-        >
-          <Plus size={18} />
-          <span>Nova Equipe</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
+          >
+            <Plus size={18} />
+            <span>Nova Equipe</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -125,13 +129,15 @@ export function Teams() {
                 <h3 className="font-bold truncate text-white">{team.name}</h3>
                 <p className="text-xs text-gray-500">Time Oficial</p>
               </div>
-              <button 
-                onClick={() => removeTeam(team.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"
-                title="Excluir time"
-              >
-                <Trash2 size={16} />
-              </button>
+              {isAdmin && (
+                <button 
+                  onClick={() => removeTeam(team.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"
+                  title="Excluir time"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </div>
           </div>
         ))}

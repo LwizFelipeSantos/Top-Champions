@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Trophy, Users, Shield, Calendar, BarChart3, Menu, Sun, Moon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Trophy, Users, Shield, Calendar, BarChart3, Menu, Sun, Moon, LogOut, LogIn, ChevronRight } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
+  const { user, isAdmin, signInWithGoogle, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
 
@@ -31,13 +33,22 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
     }
   };
 
-  const navItems = [
-    { id: 'leaderboard', label: 'Classificação', icon: Trophy },
-    { id: 'matches', label: 'Jogos & Rodadas', icon: Calendar },
-    { id: 'teams', label: 'Equipes', icon: Shield },
-    { id: 'players', label: 'Jogadores', icon: Users },
-    { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-  ];
+  const navItems = isAdmin 
+    ? [
+        { id: 'leaderboard', label: 'Classificação', icon: Trophy },
+        { id: 'matches', label: 'Jogos & Rodadas', icon: Calendar },
+        { id: 'teams', label: 'Equipes', icon: Shield },
+        { id: 'players', label: 'Jogadores', icon: Users },
+        { id: 'reports', label: 'Relatórios', icon: BarChart3 },
+      ]
+    : [
+        { id: 'leaderboard', label: 'Classificação', icon: Trophy },
+        { id: 'matches', label: 'Jogos & Rodadas', icon: Calendar },
+        { id: 'reports', label: 'Estatísticas', labelOverride: 'Desempenho', icon: BarChart3 },
+      ];
+
+  // Helper for label display
+  const getNavItemLabel = (item: any) => item.labelOverride || item.label;
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
@@ -95,19 +106,40 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
                 }`}
               >
                 <Icon size={18} />
-                {item.label}
+                {getNavItemLabel(item)}
               </button>
             )
           })}
         </nav>
         
-        <div className="mt-auto pt-6 pb-6 border-t border-gray-800 text-xs text-gray-500 px-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="status-dot"></div>
-            Armazenamento Local
-          </div>
-          <div className="text-[10px] opacity-40 leading-tight">
-            Created by Luiz Felipe Santos;<br/>Abril - 2026
+        <div className="mt-auto border-t border-gray-800 p-4">
+          {user ? (
+            <button 
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors rounded-lg group"
+            >
+              <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+              <span>Sair da Conta</span>
+            </button>
+          ) : (
+            <button 
+              onClick={signInWithGoogle}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-brand-cyan bg-brand-cyan/10 hover:bg-brand-cyan/20 transition-all rounded-lg border border-brand-cyan/20"
+            >
+              <LogIn size={18} />
+              <span>Acessar Painel</span>
+              <ChevronRight size={14} className="ml-auto" />
+            </button>
+          )}
+
+          <div className="mt-6 text-[10px] text-gray-600 px-2 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan/50"></div>
+              <span>Modo: {user ? (isAdmin ? 'Administrador' : 'Visualizador Autenticado') : 'Visitante'}</span>
+            </div>
+            <div className="opacity-40 leading-tight mt-1">
+              Created by Luiz Felipe Santos;<br/>Abril - 2026
+            </div>
           </div>
         </div>
       </div>

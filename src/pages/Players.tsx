@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
+import { useAuth } from '../context/AuthContext';
 import { Users, Plus, Trash2 } from 'lucide-react';
 
 export function Players() {
   const { players, teams, addPlayer, removePlayer } = useChampionship();
+  const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
@@ -28,15 +30,17 @@ export function Players() {
           <h1 className="text-3xl font-bold tracking-tight">Jogadores</h1>
           <p className="text-gray-400 mt-1">Elenco e atletas cadastrados nas equipes.</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          disabled={teams.length === 0}
-          className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] disabled:bg-gray-700 disabled:text-gray-400 text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
-        >
-          <Plus size={18} />
-          <span className="hidden sm:inline">Cadastrar Jogador</span>
-          <span className="sm:hidden">Cadastrar</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            disabled={teams.length === 0}
+            className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] disabled:bg-gray-700 disabled:text-gray-400 text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
+          >
+            <Plus size={18} />
+            <span className="hidden sm:inline">Cadastrar Jogador</span>
+            <span className="sm:hidden">Cadastrar</span>
+          </button>
+        )}
       </div>
 
       <div className="glow-panel rounded-2xl overflow-hidden">
@@ -75,12 +79,14 @@ export function Players() {
                     </span>
                   </td>
                   <td className="p-2 text-right">
-                    <button 
-                      onClick={() => removePlayer(player.id)}
-                      className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => removePlayer(player.id)}
+                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

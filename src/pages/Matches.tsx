@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
+import { useAuth } from '../context/AuthContext';
 import { Calendar, Plus, Trash2, CheckCircle2, ChevronDown, ListEnd } from 'lucide-react';
 import { Match } from '../types';
 
 export function Matches() {
   const { matches, teams, addMatch, addMatchesBulk, updateMatchDetails, deleteMatch } = useChampionship();
+  const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Generator state
@@ -138,43 +140,45 @@ export function Matches() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Jogos</h1>
-          <p className="text-gray-400 mt-1">Gere rodadas e registre os resultados das partidas.</p>
+          <p className="text-gray-400 mt-1">{isAdmin ? 'Gere rodadas e registre os resultados das partidas.' : 'Confira as rodadas e resultados das partidas.'}</p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              if (teams.length < 2) {
-                showMessage('error', "Você precisa cadastrar pelo menos 2 equipes na aba 'Times' primeiro.");
-                return;
-              }
-              if (matches.length > 0) {
-                showMessage('error', "Já existem jogos na tabela. Vá em Relatórios > Apagar Tudo primeiro.");
-                return;
-              }
-              setGenRounds(teams.length > 0 ? (teams.length % 2 === 0 ? teams.length - 1 : teams.length) : 1);
-              setIsGenerateModalOpen(true);
-            }}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
-          >
-            <ListEnd size={18} />
-            <span className="hidden sm:inline">Gerar Tabela</span>
-            <span className="sm:hidden">Gerar</span>
-          </button>
-          <button
-            onClick={() => {
-              if (teams.length < 2) {
-                showMessage('error', "Você precisa cadastrar pelo menos 2 equipes primeiro.");
-                return;
-              }
-              setIsModalOpen(true);
-            }}
-            className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
-          >
-            <Plus size={18} />
-            <span className="hidden sm:inline">Nova Partida</span>
-            <span className="sm:hidden">Novo</span>
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (teams.length < 2) {
+                  showMessage('error', "Você precisa cadastrar pelo menos 2 equipes na aba 'Times' primeiro.");
+                  return;
+                }
+                if (matches.length > 0) {
+                  showMessage('error', "Já existem jogos na tabela. Vá em Relatórios > Apagar Tudo primeiro.");
+                  return;
+                }
+                setGenRounds(teams.length > 0 ? (teams.length % 2 === 0 ? teams.length - 1 : teams.length) : 1);
+                setIsGenerateModalOpen(true);
+              }}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
+            >
+              <ListEnd size={18} />
+              <span className="hidden sm:inline">Gerar Tabela</span>
+              <span className="sm:hidden">Gerar</span>
+            </button>
+            <button
+              onClick={() => {
+                if (teams.length < 2) {
+                  showMessage('error', "Você precisa cadastrar pelo menos 2 equipes primeiro.");
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Nova Partida</span>
+              <span className="sm:hidden">Novo</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {teams.length < 2 && (
@@ -209,13 +213,15 @@ export function Matches() {
 
                   return (
                     <div key={match.id} className="glow-panel rounded-2xl p-6 relative group border border-gray-700 hover:border-gray-500 transition-colors">
-                      <button 
-                        onClick={() => deleteMatch(match.id)}
-                        className="absolute top-2 right-2 text-gray-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Deletar jogo"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {isAdmin && (
+                        <button 
+                          onClick={() => deleteMatch(match.id)}
+                          className="absolute top-2 right-2 text-gray-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Deletar jogo"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
 
                       <div className="flex justify-center mb-4 min-h-[30px]">
                         {isEditing ? (
@@ -293,20 +299,22 @@ export function Matches() {
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-gray-800 flex justify-center">
-                        {isEditing ? (
-                          <button 
-                            onClick={() => handleSaveScore(match.id)}
-                            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-brand-cyan hover:text-white bg-brand-cyan/10 border border-brand-cyan/30 px-4 py-2 rounded-lg transition-colors"
-                          >
-                            <CheckCircle2 size={16} /> Salvar
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => startEditing(match)}
-                            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
-                          >
-                            {match.status === 'finished' ? 'Editar Partida' : 'Lançar Partida'}
-                          </button>
+                        {isAdmin && (
+                          isEditing ? (
+                            <button 
+                              onClick={() => handleSaveScore(match.id)}
+                              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-brand-cyan hover:text-white bg-brand-cyan/10 border border-brand-cyan/30 px-4 py-2 rounded-lg transition-colors"
+                            >
+                              <CheckCircle2 size={16} /> Salvar
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => startEditing(match)}
+                              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+                            >
+                              {match.status === 'finished' ? 'Editar Partida' : 'Lançar Partida'}
+                            </button>
+                          )
                         )}
                       </div>
                     </div>

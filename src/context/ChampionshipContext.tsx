@@ -31,47 +31,42 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
 
   // Sincronizar Teams
   useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'teams'), where('userId', '==', user.uid));
+    const q = collection(db, 'teams');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Team[] = [];
       snapshot.forEach(d => data.push({ id: d.id, ...d.data() } as Team));
       setTeams(data);
     }, (err) => handleFirestoreError(err, 'list', '/teams'));
     return unsubscribe;
-  }, [user]);
+  }, []);
 
   // Sincronizar Players
   useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'players'), where('userId', '==', user.uid));
+    const q = collection(db, 'players');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Player[] = [];
       snapshot.forEach(d => data.push({ id: d.id, ...d.data() } as Player));
       setPlayers(data);
     }, (err) => handleFirestoreError(err, 'list', '/players'));
     return unsubscribe;
-  }, [user]);
+  }, []);
 
   // Sincronizar Matches
   useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'matches'), where('userId', '==', user.uid));
+    const q = collection(db, 'matches');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Match[] = [];
       snapshot.forEach(d => data.push({ id: d.id, ...d.data() } as Match));
       setMatches(data);
     }, (err) => handleFirestoreError(err, 'list', '/matches'));
     return unsubscribe;
-  }, [user]);
+  }, []);
 
   const addTeam = async (team: Omit<Team, 'id'>) => {
-    if (!user) return;
     try {
       const id = crypto.randomUUID();
       await setDoc(doc(db, 'teams', id), {
         ...team,
-        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -82,11 +77,9 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const removeTeam = async (id: string) => {
-    if (!user) return;
     try {
       await deleteDoc(doc(db, 'teams', id));
       // Delete associated players and matches using client side filter for simplicity
-      // In a real app we might batch this or cloud function.
       const teamPlayers = players.filter(p => p.teamId === id);
       for (const p of teamPlayers) {
         await deleteDoc(doc(db, 'players', p.id));
@@ -101,12 +94,10 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const addPlayer = async (player: Omit<Player, 'id'>) => {
-    if (!user) return;
     try {
       const id = crypto.randomUUID();
       await setDoc(doc(db, 'players', id), {
         ...player,
-        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -116,7 +107,6 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const removePlayer = async (id: string) => {
-    if (!user) return;
     try {
       await deleteDoc(doc(db, 'players', id));
     } catch (err) {
@@ -125,12 +115,10 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const addMatch = async (match: Omit<Match, 'id'>) => {
-    if (!user) return;
     try {
       const id = crypto.randomUUID();
       await setDoc(doc(db, 'matches', id), {
         ...match,
-        userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -140,11 +128,9 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const addMatchesBulk = async (newMatches: Omit<Match, 'id'>[]) => {
-    if (!user) return;
     try {
       if (newMatches.length === 0) return;
       
-      // Divide arrays maiores que 450 para garantir não esbarrar no limite de 500 de Firestore WriteBatch
       const chunkSize = 450;
       for (let i = 0; i < newMatches.length; i += chunkSize) {
         const chunk = newMatches.slice(i, i + chunkSize);
@@ -154,7 +140,6 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
           const matchRef = doc(db, 'matches', id);
           batch.set(matchRef, {
             ...match,
-            userId: user.uid,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
@@ -169,7 +154,6 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const updateMatchDetails = async (id: string, homeScore: number | null, awayScore: number | null, date: string) => {
-    if (!user) return;
     const match = matches.find(m => m.id === id);
     if (!match) return;
 
@@ -188,7 +172,6 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const deleteMatch = async (id: string) => {
-    if (!user) return;
     try {
       await deleteDoc(doc(db, 'matches', id));
     } catch (err) {
@@ -197,7 +180,6 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   };
 
   const resetData = async () => {
-    if (!user) return;
     try {
       const refsToDelete = [
         ...players.map(p => doc(db, 'players', p.id)),
