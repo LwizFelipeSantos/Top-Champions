@@ -24,8 +24,8 @@ export function Landing({ onLogin, onExplore }: LandingProps) {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="flex items-center gap-3"
         >
-          <div className="w-10 h-10 bg-brand-cyan rounded-xl flex items-center justify-center border-glow shadow-[0_0_20px_rgba(0,212,255,0.3)]">
-            <Trophy className="text-black" size={24} />
+          <div className="w-12 h-12 bg-brand-cyan/20 rounded-xl flex items-center justify-center border border-brand-cyan/30 shadow-[0_0_20px_rgba(0,212,255,0.3)]">
+            <Trophy className="text-brand-cyan" size={28} />
           </div>
           <span className="text-xl font-bold tracking-tight uppercase accent-cyan">Top Champions</span>
         </motion.div>
@@ -143,7 +143,9 @@ export function Landing({ onLogin, onExplore }: LandingProps) {
 
           {/* Card 4 */}
           <div className="glow-panel rounded-3xl p-8 border border-white/5 bg-gradient-to-b from-gray-900/80 to-black/80 flex flex-col justify-center text-center items-center hover:bg-gray-800/50 transition-colors">
-             <Trophy className="text-yellow-500 mb-4 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]" size={48} />
+             <div className="w-20 h-20 mb-4 bg-brand-cyan/10 rounded-full flex items-center justify-center border border-brand-cyan/20 shadow-[0_0_30px_rgba(0,212,255,0.2)]">
+                <Trophy className="text-brand-cyan drop-shadow-[0_0_15px_rgba(0,212,255,0.5)]" size={40} />
+             </div>
              <h3 className="text-lg font-bold">Quem levará<br/>a taça?</h3>
           </div>
         </motion.div>

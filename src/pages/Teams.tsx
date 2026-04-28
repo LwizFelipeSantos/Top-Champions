@@ -1,18 +1,36 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Plus, Trash2, Upload } from 'lucide-react';
+import { Shield, Plus, Trash2, Upload, Edit3 } from 'lucide-react';
+import { Team } from '../types';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#000000', '#64748b'];
 
 export function Teams() {
-  const { teams, addTeam, removeTeam } = useChampionship();
+  const { teams, addTeam, updateTeam, removeTeam } = useChampionship();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [newTeamImage, setNewTeamImage] = useState('');
   const [uiMessage, setUiMessage] = useState<{type: 'error' | 'success', text: string} | null>(null);
+
+  const openAddModal = () => {
+    setEditingTeam(null);
+    setNewTeamName('');
+    setSelectedColor(COLORS[0]);
+    setNewTeamImage('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (team: Team) => {
+    setEditingTeam(team);
+    setNewTeamName(team.name);
+    setSelectedColor(team.color || COLORS[0]);
+    setNewTeamImage(team.imageUrl || '');
+    setIsModalOpen(true);
+  };
 
   const showMessage = (type: 'error' | 'success', text: string) => {
     setUiMessage({type, text});
@@ -62,16 +80,20 @@ export function Teams() {
     if (!newTeamName.trim()) return;
     
     const teamObj: any = { name: newTeamName, color: selectedColor };
-    if (newTeamImage.trim()) {
-      teamObj.imageUrl = newTeamImage.trim();
-    }
+    teamObj.imageUrl = newTeamImage.trim() || null;
     
     try {
-      await addTeam(teamObj);
+      if (editingTeam) {
+        await updateTeam(editingTeam.id, teamObj);
+        showMessage('success', 'Time atualizado!');
+      } else {
+        await addTeam(teamObj);
+        showMessage('success', 'Time adicionado!');
+      }
       setNewTeamName('');
       setNewTeamImage('');
       setIsModalOpen(false);
-      showMessage('success', 'Time adicionado!');
+      setEditingTeam(null);
     } catch (err: any) {
       console.error(err);
       let errorText = err.message;
@@ -102,7 +124,7 @@ export function Teams() {
         </div>
         {isAdmin && (
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
           >
             <Plus size={18} />
@@ -130,13 +152,22 @@ export function Teams() {
                 <p className="text-xs text-gray-500">Time Oficial</p>
               </div>
               {isAdmin && (
-                <button 
-                  onClick={() => removeTeam(team.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"
-                  title="Excluir time"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                  <button 
+                    onClick={() => openEditModal(team)}
+                    className="p-2 text-gray-500 hover:text-brand-cyan hover:bg-brand-cyan/10 rounded-lg"
+                    title="Editar time"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button 
+                    onClick={() => removeTeam(team.id)}
+                    className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg"
+                    title="Excluir time"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -155,7 +186,7 @@ export function Teams() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="glow-panel rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-6 border-b border-gray-800">
-              <h2 className="text-xl font-bold accent-cyan">Cadastrar Nova Equipe</h2>
+              <h2 className="text-xl font-bold accent-cyan">{editingTeam ? 'Editar Equipe' : 'Cadastrar Nova Equipe'}</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div>
@@ -215,7 +246,10 @@ export function Teams() {
               <div className="flex gap-3 pt-4 border-t border-gray-800">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingTeam(null);
+                  }}
                   className="flex-1 px-4 py-2 bg-gray-800 text-gray-300 hover:bg-gray-700 rounded-lg font-medium transition-colors"
                 >
                   Cancelar
@@ -225,7 +259,7 @@ export function Teams() {
                   disabled={!newTeamName.trim()}
                   className="flex-1 px-4 py-2 bg-brand-cyan text-black hover:bg-[#00b0d4] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-colors border-glow"
                 >
-                  Salvar
+                  {editingTeam ? 'Atualizar' : 'Salvar'}
                 </button>
               </div>
             </form>

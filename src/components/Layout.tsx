@@ -53,9 +53,11 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
       {/* Sidebar Mobile Header */}
-      <div className="md:hidden glow-panel p-4 flex justify-between items-center shadow-md">
+        <div className="md:hidden glow-panel p-4 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight accent-cyan">
-          <Trophy className="text-brand-cyan" />
+          <div className="w-10 h-10 bg-brand-cyan/20 rounded-lg flex items-center justify-center border border-brand-cyan/30 shadow-[0_0_15px_rgba(0,212,255,0.2)]">
+            <Trophy className="text-brand-cyan" size={24} />
+          </div>
           <span>Top Champions</span>
         </div>
         <div className="flex items-center gap-2">
@@ -75,8 +77,8 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
       `}>
         <div className="p-6 hidden md:flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-brand-cyan rounded-lg flex items-center justify-center border-glow">
-              <Trophy className="text-black" size={24} />
+            <div className="w-12 h-12 bg-brand-cyan/10 rounded-lg flex items-center justify-center border-glow shadow-[0_0_20px_rgba(0,212,255,0.1)]">
+              <Trophy className="text-brand-cyan" size={32} />
             </div>
             <span className="text-xl font-bold tracking-tight accent-cyan">TOP CHAMPIONS</span>
           </div>

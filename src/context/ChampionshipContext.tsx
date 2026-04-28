@@ -10,6 +10,7 @@ interface ChampionshipContextType {
   players: Player[];
   matches: Match[];
   addTeam: (team: Omit<Team, 'id'>) => Promise<void>;
+  updateTeam: (id: string, team: Partial<Omit<Team, 'id'>>) => Promise<void>;
   removeTeam: (id: string) => Promise<void>;
   addPlayer: (player: Omit<Player, 'id'>) => Promise<void>;
   removePlayer: (id: string) => Promise<void>;
@@ -72,6 +73,18 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
       });
     } catch (err) {
       handleFirestoreError(err, 'create', '/teams');
+      throw err;
+    }
+  };
+
+  const updateTeam = async (id: string, team: Partial<Omit<Team, 'id'>>) => {
+    try {
+      await updateDoc(doc(db, 'teams', id), {
+        ...team,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      handleFirestoreError(err, 'update', `/teams/${id}`);
       throw err;
     }
   };
@@ -268,7 +281,7 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   return (
     <ChampionshipContext.Provider value={{
       teams, players, matches,
-      addTeam, removeTeam, addPlayer, removePlayer,
+      addTeam, updateTeam, removeTeam, addPlayer, removePlayer,
       addMatch, addMatchesBulk, updateMatchDetails, deleteMatch,
       leaderboard, resetData
     }}>
