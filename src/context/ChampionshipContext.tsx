@@ -3,12 +3,13 @@ import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, updateDoc
 import { db, auth } from '../firebase';
 import { useAuth } from './AuthContext';
 import { handleFirestoreError } from '../lib/firebaseErrors';
-import { Team, Player, Match, LeaderboardEntry } from '../types';
+import { Team, Player, Match, LeaderboardEntry, Champion } from '../types';
 
 interface ChampionshipContextType {
   teams: Team[];
   players: Player[];
   matches: Match[];
+  champions: Champion[];
   addTeam: (team: Omit<Team, 'id'>) => Promise<void>;
   updateTeam: (id: string, team: Partial<Omit<Team, 'id'>>) => Promise<void>;
   removeTeam: (id: string) => Promise<void>;
@@ -18,6 +19,9 @@ interface ChampionshipContextType {
   addMatchesBulk: (matches: Omit<Match, 'id'>[]) => Promise<void>;
   updateMatchDetails: (id: string, homeScore: number | null, awayScore: number | null, date: string) => Promise<void>;
   deleteMatch: (id: string) => Promise<void>;
+  addChampion: (champion: Omit<Champion, 'id'>) => Promise<void>;
+  updateChampion: (id: string, champion: Partial<Omit<Champion, 'id'>>) => Promise<void>;
+  removeChampion: (id: string) => Promise<void>;
   leaderboard: LeaderboardEntry[];
   resetData: () => Promise<void>;
 }
@@ -29,6 +33,7 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
   const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [champions, setChampions] = useState<Champion[]>([]);
 
   // Sincronizar Teams
   useEffect(() => {
@@ -60,6 +65,18 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
       snapshot.forEach(d => data.push({ id: d.id, ...d.data() } as Match));
       setMatches(data);
     }, (err) => handleFirestoreError(err, 'list', '/matches'));
+    return unsubscribe;
+  }, []);
+
+  // Sincronizar Champions
+  useEffect(() => {
+    const q = collection(db, 'champions');
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Champion[] = [];
+      snapshot.forEach(d => data.push({ id: d.id, ...d.data() } as Champion));
+      // order champions desc by created at or something, but we'll do it in UI
+      setChampions(data);
+    }, (err) => handleFirestoreError(err, 'list', '/champions'));
     return unsubscribe;
   }, []);
 
@@ -192,6 +209,40 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const addChampion = async (champion: Omit<Champion, 'id'>) => {
+    try {
+      const id = crypto.randomUUID();
+      await setDoc(doc(db, 'champions', id), {
+        ...champion,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      handleFirestoreError(err, 'create', '/champions');
+      throw err;
+    }
+  };
+
+  const updateChampion = async (id: string, champion: Partial<Omit<Champion, 'id'>>) => {
+    try {
+      await updateDoc(doc(db, 'champions', id), {
+        ...champion,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      handleFirestoreError(err, 'update', `/champions/${id}`);
+      throw err;
+    }
+  };
+
+  const removeChampion = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'champions', id));
+    } catch (err) {
+      handleFirestoreError(err, 'delete', `/champions/${id}`);
+    }
+  };
+
   const resetData = async () => {
     try {
       const refsToDelete = [
@@ -280,9 +331,10 @@ export function ChampionshipProvider({ children }: { children: React.ReactNode }
 
   return (
     <ChampionshipContext.Provider value={{
-      teams, players, matches,
+      teams, players, matches, champions,
       addTeam, updateTeam, removeTeam, addPlayer, removePlayer,
       addMatch, addMatchesBulk, updateMatchDetails, deleteMatch,
+      addChampion, updateChampion, removeChampion,
       leaderboard, resetData
     }}>
       {children}

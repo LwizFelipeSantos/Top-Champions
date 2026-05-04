@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Plus, Trash2, CheckCircle2, ChevronDown, ListEnd } from 'lucide-react';
+import { Calendar, Plus, Trash2, CheckCircle2, ChevronDown, ListEnd, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Match } from '../types';
 
 export function Matches() {
@@ -25,6 +25,12 @@ export function Matches() {
   const [editingScore, setEditingScore] = useState<string | null>(null);
   const [tempScores, setTempScores] = useState({ home: '', away: '', date: '' });
   
+  // View mode
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
+  
+  // Active round state
+  const [activeRound, setActiveRound] = useState<number | null>(null);
+
   // Custom toast/error messages for iframe sandbox safety
   const [uiMessage, setUiMessage] = useState<{type: 'error' | 'success', text: string} | null>(null);
 
@@ -121,13 +127,163 @@ export function Matches() {
   };
 
   // Agrupar partidas por rodada
-  const matchesByRound = matches.reduce((acc, match) => {
-    if (!acc[match.round]) acc[match.round] = [];
-    acc[match.round].push(match);
-    return acc;
-  }, {} as Record<number, typeof matches>);
+  const matchesByRound = useMemo(() => {
+    return matches.reduce((acc, match) => {
+      if (!acc[match.round]) acc[match.round] = [];
+      acc[match.round].push(match);
+      return acc;
+    }, {} as Record<number, typeof matches>);
+  }, [matches]);
 
-  const sortedRounds = Object.keys(matchesByRound).map(Number).sort((a, b) => b - a); // Mostrar as mais recentes primeiro
+  const sortedRounds = useMemo(() => {
+    return Object.keys(matchesByRound).map(Number).sort((a, b) => a - b);
+  }, [matchesByRound]);
+
+  useEffect(() => {
+    if (sortedRounds.length > 0 && (activeRound === null || !sortedRounds.includes(activeRound))) {
+      const ongoing = sortedRounds.find(r => matchesByRound[r].some(m => m.status !== 'finished'));
+      setActiveRound(ongoing !== undefined ? ongoing : sortedRounds[sortedRounds.length - 1]);
+    }
+  }, [sortedRounds, activeRound, matchesByRound]);
+
+  const handlePrevRound = () => {
+    if (activeRound === null) return;
+    const currentIndex = sortedRounds.indexOf(activeRound);
+    if (currentIndex > 0) setActiveRound(sortedRounds[currentIndex - 1]);
+  };
+
+  const handleNextRound = () => {
+    if (activeRound === null) return;
+    const currentIndex = sortedRounds.indexOf(activeRound);
+    if (currentIndex < sortedRounds.length - 1) setActiveRound(sortedRounds[currentIndex + 1]);
+  };
+
+  const renderMatch = (match: Match, hideBorders = false) => {
+    const home = getTeam(match.homeTeamId);
+    const away = getTeam(match.awayTeamId);
+    const isEditing = editingScore === match.id;
+
+    if (!home || !away) return null;
+
+    return (
+      <div key={match.id} className={`p-4 sm:p-6 relative group hover:bg-gray-800/30 transition-colors ${hideBorders ? '' : 'glow-panel rounded-2xl border border-gray-700 hover:border-gray-500'}`}>
+        {isAdmin && (
+          <button 
+            onClick={() => deleteMatch(match.id)}
+            className="absolute top-4 right-4 text-gray-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Deletar jogo"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+
+        <div className="flex justify-center mb-4 min-h-[24px]">
+          {isEditing ? (
+            <input
+              type="date"
+              value={tempScores.date}
+              onChange={e => setTempScores(prev => ({...prev, date: e.target.value}))}
+              className="bg-gray-900 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1 outline-none focus:border-brand-cyan [color-scheme:dark]"
+            />
+          ) : (
+            <div className="text-center text-sm text-gray-500 font-medium flex items-center gap-2">
+              {match.date ? (
+                <>
+                  <span>{new Date(match.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                  <span>•</span>
+                  <span>{new Date(match.date + 'T12:00:00') < new Date() ? 'Ontem' : 'Hoje'}</span>
+                </>
+              ) : (
+                'A DEFINIR'
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-center max-w-lg mx-auto gap-2 sm:gap-6">
+          {/* Time Casa */}
+          <div className="flex-1 flex flex-col items-center justify-start gap-2">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full flex items-center justify-center border border-white/10 overflow-hidden bg-gray-800" style={!home.imageUrl ? { backgroundColor: home.color || '#cbd5e1' } : undefined}>
+              {home.imageUrl ? (
+                <img src={home.imageUrl} alt={home.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="font-bold text-white text-xs">{home.name.substring(0,3).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="font-bold text-gray-400 text-[10px] sm:text-xs text-center uppercase leading-tight line-clamp-2 px-1">{home.name}</span>
+          </div>
+
+          {/* Placar Central */}
+          <div className="shrink-0 flex flex-col items-center mb-6">
+            {isEditing ? (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-900 border border-gray-700">
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={tempScores.home} 
+                  onChange={e => setTempScores(prev => ({...prev, home: e.target.value}))}
+                  className="w-10 sm:w-14 text-center font-bold text-xl bg-black border border-gray-700 rounded text-white"
+                  placeholder="-"
+                />
+                <span className="text-gray-500 font-bold text-xl">×</span>
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={tempScores.away} 
+                  onChange={e => setTempScores(prev => ({...prev, away: e.target.value}))}
+                  className="w-10 sm:w-14 text-center font-bold text-xl bg-black border border-gray-700 rounded text-white"
+                  placeholder="-"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 sm:gap-4 font-bold text-2xl sm:text-4xl text-white">
+                <span className={match.status === 'finished' ? '' : 'text-gray-600'}>{match.status === 'finished' ? match.homeScore : '-'}</span>
+                <span className="text-xl sm:text-2xl font-light text-gray-500">×</span>
+                <span className={match.status === 'finished' ? '' : 'text-gray-600'}>{match.status === 'finished' ? match.awayScore : '-'}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Time Fora */}
+          <div className="flex-1 flex flex-col items-center justify-start gap-2">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full flex items-center justify-center border border-white/10 overflow-hidden bg-gray-800" style={!away.imageUrl ? { backgroundColor: away.color || '#cbd5e1' } : undefined}>
+              {away.imageUrl ? (
+                <img src={away.imageUrl} alt={away.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="font-bold text-white text-xs">{away.name.substring(0,3).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="font-bold text-gray-400 text-[10px] sm:text-xs text-center uppercase leading-tight line-clamp-2 px-1">{away.name}</span>
+          </div>
+        </div>
+
+        {/* Action button or status */}
+        <div className="mt-2 flex justify-center">
+          {isAdmin && (
+            isEditing ? (
+              <button 
+                onClick={() => handleSaveScore(match.id)}
+                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-brand-cyan hover:text-white bg-brand-cyan/10 border border-brand-cyan/30 px-4 py-2 rounded-lg transition-colors"
+              >
+                <CheckCircle2 size={16} /> Salvar
+              </button>
+            ) : (
+              <button 
+                onClick={() => startEditing(match)}
+                className={`text-xs sm:text-sm font-bold uppercase flex items-center justify-center tracking-widest px-4 py-2 rounded-lg transition-colors ${
+                  match.status === 'finished' 
+                    ? 'text-gray-400 hover:text-white bg-gray-800/30 hover:bg-gray-800/80' 
+                    : 'text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700'
+                }`}
+              >
+                {match.status === 'finished' ? 'Editar Partida' : 'Lançar Partida'}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 relative">
@@ -137,48 +293,68 @@ export function Matches() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Jogos</h1>
           <p className="text-gray-400 mt-1">{isAdmin ? 'Gere rodadas e registre os resultados das partidas.' : 'Confira as rodadas e resultados das partidas.'}</p>
         </div>
-        {isAdmin && (
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                if (teams.length < 2) {
-                  showMessage('error', "Você precisa cadastrar pelo menos 2 equipes na aba 'Times' primeiro.");
-                  return;
-                }
-                if (matches.length > 0) {
-                  showMessage('error', "Já existem jogos na tabela. Vá em Relatórios > Apagar Tudo primeiro.");
-                  return;
-                }
-                setGenRounds(teams.length > 0 ? (teams.length % 2 === 0 ? teams.length - 1 : teams.length) : 1);
-                setIsGenerateModalOpen(true);
-              }}
-              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
-            >
-              <ListEnd size={18} />
-              <span className="hidden sm:inline">Gerar Tabela</span>
-              <span className="sm:hidden">Gerar</span>
-            </button>
-            <button
-              onClick={() => {
-                if (teams.length < 2) {
-                  showMessage('error', "Você precisa cadastrar pelo menos 2 equipes primeiro.");
-                  return;
-                }
-                setIsModalOpen(true);
-              }}
-              className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
-            >
-              <Plus size={18} />
-              <span className="hidden sm:inline">Nova Partida</span>
-              <span className="sm:hidden">Novo</span>
-            </button>
-          </div>
-        )}
+        
+        <div className="flex flex-wrap items-center gap-3">
+          {matches.length > 0 && (
+            <div className="flex items-center bg-gray-900/50 rounded-lg p-1 border border-gray-800">
+              <button 
+                onClick={() => setViewMode('carousel')}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors ${viewMode === 'carousel' ? 'bg-[#00C65E]/20 text-[#00C65E] border border-[#00C65E]/30' : 'text-gray-400 hover:text-white border border-transparent'}`}
+              >
+                Rodadas
+              </button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors ${viewMode === 'list' ? 'bg-[#00C65E]/20 text-[#00C65E] border border-[#00C65E]/30' : 'text-gray-400 hover:text-white border border-transparent'}`}
+              >
+                Lista
+              </button>
+            </div>
+          )}
+          
+          {isAdmin && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (teams.length < 2) {
+                    showMessage('error', "Você precisa cadastrar pelo menos 2 equipes na aba 'Times' primeiro.");
+                    return;
+                  }
+                  if (matches.length > 0) {
+                    showMessage('error', "Já existem jogos na tabela. Vá em Relatórios > Apagar Tudo primeiro.");
+                    return;
+                  }
+                  setGenRounds(teams.length > 0 ? (teams.length % 2 === 0 ? teams.length - 1 : teams.length) : 1);
+                  setIsGenerateModalOpen(true);
+                }}
+                className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
+              >
+                <ListEnd size={18} />
+                <span className="hidden sm:inline">Gerar Tabela</span>
+                <span className="sm:hidden">Gerar</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (teams.length < 2) {
+                    showMessage('error', "Você precisa cadastrar pelo menos 2 equipes primeiro.");
+                    return;
+                  }
+                  setIsModalOpen(true);
+                }}
+                className="flex items-center gap-2 bg-brand-cyan hover:bg-[#00b0d4] text-black px-4 py-2.5 rounded-lg font-bold transition-all border-glow"
+              >
+                <Plus size={18} />
+                <span className="hidden sm:inline">Nova Partida</span>
+                <span className="sm:hidden">Novo</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {teams.length < 2 && (
@@ -193,8 +369,11 @@ export function Matches() {
           <h3 className="text-white font-bold text-lg">Nenhum jogo agendado</h3>
           <p className="text-gray-400 max-w-sm mx-auto mt-2">Comece agendando os confrontos entre as equipes registradas.</p>
         </div>
-      ) : (
-        <div className="space-y-8">
+      ) : viewMode === 'list' ? (
+        <div className="space-y-8 mt-8">
+          <div className="p-4 sm:px-6 -mb-4">
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight">JOGOS</h2>
+          </div>
           {sortedRounds.map(r => (
             <div key={r} className="space-y-4">
               <div className="flex items-center gap-3">
@@ -202,127 +381,45 @@ export function Matches() {
                   Rodada {r}
                 </h3>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {matchesByRound[r].map(match => {
-                  const home = getTeam(match.homeTeamId);
-                  const away = getTeam(match.awayTeamId);
-                  const isEditing = editingScore === match.id;
-
-                  if (!home || !away) return null;
-
-                  return (
-                    <div key={match.id} className="glow-panel rounded-2xl p-6 relative group border border-gray-700 hover:border-gray-500 transition-colors">
-                      {isAdmin && (
-                        <button 
-                          onClick={() => deleteMatch(match.id)}
-                          className="absolute top-2 right-2 text-gray-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Deletar jogo"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-
-                      <div className="flex justify-center mb-4 min-h-[30px]">
-                        {isEditing ? (
-                          <input
-                            type="date"
-                            value={tempScores.date}
-                            onChange={e => setTempScores(prev => ({...prev, date: e.target.value}))}
-                            className="bg-gray-900 border border-gray-700 text-gray-300 text-xs rounded px-2 py-1 outline-none focus:border-brand-cyan [color-scheme:dark]"
-                          />
-                        ) : (
-                          <div className="text-center text-xs font-bold text-gray-500 uppercase tracking-wider py-1">
-                            {match.date ? new Date(match.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'DATA A DEFINIR'}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between px-2 gap-4">
-                        {/* Time Casa */}
-                        <div className="flex-1 flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 rounded-lg flex items-center justify-center border border-white/10 overflow-hidden bg-gray-800" style={!home.imageUrl ? { backgroundColor: home.color || '#cbd5e1' } : undefined}>
-                            {home.imageUrl ? (
-                              <img src={home.imageUrl} alt={home.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            ) : (
-                              <span className="font-bold text-white text-xs">{home.name.substring(0,3).toUpperCase()}</span>
-                            )}
-                          </div>
-                          <span className="font-bold text-gray-300 text-sm text-center line-clamp-1">{home.name}</span>
-                        </div>
-
-                        {/* Placar Central */}
-                        <div className="shrink-0 flex flex-col items-center gap-2">
-                          {isEditing ? (
-                            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-900 border border-gray-700">
-                              <input 
-                                type="number" 
-                                min="0" 
-                                value={tempScores.home} 
-                                onChange={e => setTempScores(prev => ({...prev, home: e.target.value}))}
-                                className="w-10 text-center font-bold bg-black border border-gray-700 rounded text-white"
-                                placeholder="-"
-                              />
-                              <span className="text-gray-500 font-bold">X</span>
-                              <input 
-                                type="number" 
-                                min="0" 
-                                value={tempScores.away} 
-                                onChange={e => setTempScores(prev => ({...prev, away: e.target.value}))}
-                                className="w-10 text-center font-bold bg-black border border-gray-700 rounded text-white"
-                                placeholder="-"
-                              />
-                            </div>
-                          ) : (
-                            <div 
-                              className={`flex items-center gap-3 px-4 py-2 rounded-lg font-mono text-xl 
-                                ${match.status === 'finished' ? 'bg-gray-900 text-white border border-gray-700' : 'bg-transparent text-gray-500'}`}
-                            >
-                              <span className={match.status === 'finished' ? 'accent-cyan' : ''}>{match.status === 'finished' ? match.homeScore : '-'}</span>
-                              <span className="text-sm font-normal opacity-50">VS</span>
-                              <span className={match.status === 'finished' ? 'accent-cyan' : ''}>{match.status === 'finished' ? match.awayScore : '-'}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Time Fora */}
-                        <div className="flex-1 flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 rounded-lg flex items-center justify-center border border-white/10 overflow-hidden bg-gray-800" style={!away.imageUrl ? { backgroundColor: away.color || '#cbd5e1' } : undefined}>
-                            {away.imageUrl ? (
-                              <img src={away.imageUrl} alt={away.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            ) : (
-                              <span className="font-bold text-white text-xs">{away.name.substring(0,3).toUpperCase()}</span>
-                            )}
-                          </div>
-                          <span className="font-bold text-gray-300 text-sm text-center line-clamp-1">{away.name}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-gray-800 flex justify-center">
-                        {isAdmin && (
-                          isEditing ? (
-                            <button 
-                              onClick={() => handleSaveScore(match.id)}
-                              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-brand-cyan hover:text-white bg-brand-cyan/10 border border-brand-cyan/30 px-4 py-2 rounded-lg transition-colors"
-                            >
-                              <CheckCircle2 size={16} /> Salvar
-                            </button>
-                          ) : (
-                            <button 
-                              onClick={() => startEditing(match)}
-                              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
-                            >
-                              {match.status === 'finished' ? 'Editar Partida' : 'Lançar Partida'}
-                            </button>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {matchesByRound[r].map(match => renderMatch(match, false))}
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="glow-panel overflow-hidden mt-8">
+          {/* Title */}
+          <div className="p-4 sm:px-6 pt-6 -mb-2">
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight">JOGOS</h2>
+          </div>
+
+          {/* Round Navigator */}
+          <div className="flex items-center justify-between p-4 bg-gray-800/20 border-b border-t border-gray-800/80 mt-4">
+            <button 
+              onClick={handlePrevRound}
+              disabled={activeRound === null || activeRound === sortedRounds[0]}
+              className="p-2 text-[#00C65E] hover:bg-[#00C65E]/10 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+            >
+              <ChevronLeft size={28} strokeWidth={3} />
+            </button>
+            
+            <h3 className="text-xl font-bold text-white tracking-wide uppercase">
+              {activeRound}ª RODADA
+            </h3>
+
+            <button 
+              onClick={handleNextRound}
+              disabled={activeRound === null || activeRound === sortedRounds[sortedRounds.length - 1]}
+              className="p-2 text-[#00C65E] hover:bg-[#00C65E]/10 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+            >
+              <ChevronRight size={28} strokeWidth={3} />
+            </button>
+          </div>
+
+          <div className="divide-y divide-gray-800">
+            {activeRound !== null && matchesByRound[activeRound]?.map(match => renderMatch(match, true))}
+          </div>
         </div>
       )}
 

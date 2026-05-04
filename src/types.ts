@@ -1,3 +1,12 @@
+export interface Champion {
+  id: string;
+  seasonName: string;
+  teamId: string;
+  teamName: string;
+  imageUrl?: string;
+  finalLeaderboard?: LeaderboardEntry[];
+}
+
 export interface Team {
   id: string;
   name: string;

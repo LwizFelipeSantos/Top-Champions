@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useChampionship } from '../context/ChampionshipContext';
 import { useAuth } from '../context/AuthContext';
-import { Database, AlertCircle, RefreshCw } from 'lucide-react';
+import { Database, AlertCircle, RefreshCw, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export function Reports() {
-  const { leaderboard, teams, resetData } = useChampionship();
+  const { leaderboard, teams, resetData, addChampion } = useChampionship();
   const { isAdmin } = useAuth();
+  const [seasonName, setSeasonName] = useState(new Date().getFullYear().toString());
 
   // Preparar os dados para o gráfico
   const chartData = leaderboard.slice(0, 10).map(entry => ({
@@ -30,6 +31,32 @@ export function Reports() {
     } catch (err: any) {
       console.error(err);
       showMessage('error', 'Houve um erro ao deletar: ' + err.message);
+    }
+  }
+
+  const handleFinalize = async () => {
+    if (leaderboard.length === 0) {
+      showMessage('error', 'Não há times na classificação para definir um campeão.');
+      return;
+    }
+    const championEntry = leaderboard[0];
+    if (!seasonName.trim()) {
+      showMessage('error', 'Informe o ano ou nome da temporada para salvar o campeão.');
+      return;
+    }
+
+    try {
+      await addChampion({
+        seasonName: seasonName.trim(),
+        teamId: championEntry.teamId,
+        teamName: championEntry.teamName,
+        imageUrl: championEntry.imageUrl || '',
+        finalLeaderboard: [...leaderboard]
+      });
+      showMessage('success', 'Campeonato finalizado! O campeão foi salvo no histórico.');
+    } catch(err: any) {
+      console.error(err);
+      showMessage('error', 'Houve um erro salvar o campeão: ' + err.message);
     }
   }
 
@@ -96,18 +123,43 @@ export function Reports() {
           </div>
 
           {isAdmin && (
-            <div className="glow-panel border-rose-900/50 p-6 rounded-2xl bg-rose-950/20">
-              <h2 className="text-lg font-bold text-rose-500 mb-2">Zona de Perigo</h2>
-              <p className="text-sm text-gray-400 mb-4">
-                Isso irá deletar todas as equipes, jogadores e partidas registradas. A ação é irreversível. (Clique 2 vezes para confirmar)
-              </p>
-              <button 
-                onDoubleClick={handleReset}
-                className="flex items-center justify-center gap-2 w-full bg-rose-600/20 hover:bg-rose-600 border border-rose-600/50 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"
-              >
-                <RefreshCw size={16} />
-                Resetar Campeonato
-              </button>
+            <div className="flex flex-col gap-6">
+              <div className="glow-panel border-[#00C65E]/50 p-6 rounded-2xl bg-[#00C65E]/10">
+                <h2 className="text-lg font-bold text-[#00C65E] mb-2">Finalizar Competição</h2>
+                <p className="text-sm text-gray-400 mb-4">
+                  Define o clube {leaderboard.length > 0 ? <span className="text-white font-bold">{leaderboard[0].teamName}</span> : 'primeiro colocado'} como o grande campeão com base na classificação atual e salva no histórico. Salvar o campeão não apaga os times nem as partidas atuais.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input 
+                    type="text" 
+                    value={seasonName}
+                    onChange={e => setSeasonName(e.target.value)}
+                    placeholder="Ano / Temporada"
+                    className="bg-gray-900 border border-[#00C65E]/30 text-white rounded-lg px-4 py-2.5 outline-none focus:border-[#00C65E] transition-colors w-full sm:w-1/3 text-sm font-bold placeholder-gray-500"
+                  />
+                  <button 
+                    onClick={handleFinalize}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#00C65E] hover:bg-[#00a34b] text-black px-4 py-2.5 rounded-lg text-sm font-black transition-colors"
+                  >
+                    <Trophy size={16} />
+                    Salvar Campeão no Histórico
+                  </button>
+                </div>
+              </div>
+
+              <div className="glow-panel border-rose-900/50 p-6 rounded-2xl bg-rose-950/20">
+                <h2 className="text-lg font-bold text-rose-500 mb-2">Zona de Perigo</h2>
+                <p className="text-sm text-gray-400 mb-4">
+                  Isso irá deletar todas as equipes, jogadores e partidas da competição atual (não apaga o histórico de campeões). A ação é irreversível. (Clique 2 vezes para confirmar)
+                </p>
+                <button 
+                  onDoubleClick={handleReset}
+                  className="flex items-center justify-center gap-2 w-full bg-rose-600/20 hover:bg-rose-600 border border-rose-600/50 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"
+                >
+                  <RefreshCw size={16} />
+                  Resetar Competição Atual
+                </button>
+              </div>
             </div>
           )}
         </div>

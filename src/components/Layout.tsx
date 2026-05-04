@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Trophy, Users, Shield, Calendar, BarChart3, Menu, Sun, Moon, LogOut, LogIn, ChevronRight } from 'lucide-react';
+import { Trophy, Users, Shield, Calendar, BarChart3, Menu, Sun, Moon, LogOut, LogIn, ChevronRight, Crown } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -36,6 +36,7 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
   const navItems = isAdmin 
     ? [
         { id: 'leaderboard', label: 'Classificação', icon: Trophy },
+        { id: 'champions', label: 'Campeões', icon: Crown },
         { id: 'matches', label: 'Jogos & Rodadas', icon: Calendar },
         { id: 'teams', label: 'Equipes', icon: Shield },
         { id: 'players', label: 'Jogadores', icon: Users },
@@ -43,6 +44,7 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
       ]
     : [
         { id: 'leaderboard', label: 'Classificação', icon: Trophy },
+        { id: 'champions', label: 'Campeões', icon: Crown },
         { id: 'matches', label: 'Jogos & Rodadas', icon: Calendar },
         { id: 'reports', label: 'Estatísticas', labelOverride: 'Desempenho', icon: BarChart3 },
       ];

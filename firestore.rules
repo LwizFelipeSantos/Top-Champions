@@ -119,5 +119,37 @@ service cloud.firestore {
         )
       );
     }
+    // CHAMPION VALIDATION
+    function isValidChampion(data) {
+      return data.keys().hasAll(['seasonName', 'teamId', 'teamName', 'createdAt', 'updatedAt']) 
+        && data.keys().size() <= 7
+        && data.seasonName is string && data.seasonName.size() > 0 && data.seasonName.size() <= 100
+        && data.teamId is string && data.teamId.size() <= 128
+        && data.teamName is string && data.teamName.size() <= 100
+        && (data.get('imageUrl', '') is string && data.get('imageUrl', '').size() <= 300000)
+        && (data.get('finalLeaderboard', []) is list)
+        && data.createdAt is timestamp 
+        && data.updatedAt is timestamp;
+    }
+
+    match /champions/{championId} {
+      allow read: if true;
+      allow delete: if isAdmin() && isValidId(championId);
+      
+      allow create: if isAdmin() 
+        && isValidId(championId)
+        && isValidChampion(incoming()) 
+        && incoming().createdAt == request.time 
+        && incoming().updatedAt == request.time;
+        
+      allow update: if (
+        isAdmin() 
+        && isValidId(championId)
+        && isValidChampion(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['seasonName', 'teamId', 'teamName', 'imageUrl', 'finalLeaderboard', 'updatedAt'])
+      );
+    }
   }
 }

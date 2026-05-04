@@ -8,6 +8,7 @@ import { Players } from './pages/Players';
 import { Matches } from './pages/Matches';
 import { Reports } from './pages/Reports';
 import { Landing } from './pages/Landing';
+import { Champions } from './pages/Champions';
 
 function AppContent() {
   const [currentTab, setCurrentTab] = useState('leaderboard');
@@ -31,6 +32,7 @@ function AppContent() {
   const renderContent = () => {
     switch (currentTab) {
       case 'leaderboard': return <Leaderboard />;
+      case 'champions': return <Champions />;
       case 'teams': return <Teams />;
       case 'players': return <Players />;
       case 'matches': return <Matches />;

@@ -1,5 +1,20 @@
 {
   "entities": {
+    "Champion": {
+      "title": "Champion",
+      "description": "A championship winner from a past season.",
+      "type": "object",
+      "properties": {
+        "seasonName": { "type": "string" },
+        "teamId": { "type": "string" },
+        "teamName": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "finalLeaderboard": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["seasonName", "teamId", "teamName", "createdAt", "updatedAt"]
+    },
     "Team": {
       "title": "Team",
       "description": "A championship team.",
@@ -58,6 +73,10 @@
     "/matches/{matchId}": {
       "schema": { "$ref": "#/entities/Match" },
       "description": "Stores the scheduled and finished matches."
+    },
+    "/champions/{championId}": {
+      "schema": { "$ref": "#/entities/Champion" },
+      "description": "Stores the past champions of the league."
     }
   }
 }

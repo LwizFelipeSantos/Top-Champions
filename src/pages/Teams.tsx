@@ -147,9 +147,9 @@ export function Teams() {
                   <Shield className="text-white drop-shadow-md" size={20} />
                 )}
               </div>
-              <div className="flex-1 min-w-0 pr-2">
-                <h3 className="font-bold truncate text-white">{team.name}</h3>
-                <p className="text-xs text-gray-500">Time Oficial</p>
+              <div className="flex-1 min-w-0 pr-1 flex flex-col justify-center">
+                <h3 className="font-bold text-[11px] sm:text-xs text-white leading-tight uppercase truncate" title={team.name}>{team.name}</h3>
+                <p className="text-[9px] text-gray-500 mt-0.5">Time Oficial</p>
               </div>
               {isAdmin && (
                 <div className="flex items-center gap-1">
